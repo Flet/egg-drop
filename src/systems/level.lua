@@ -3,6 +3,7 @@
 
 local PegTypes = require("src.systems.pegs")
 local Target = require("src.objects.target")
+local Wall = require("src.objects.wall")
 
 local Level = {}
 
@@ -68,14 +69,46 @@ function Level.load(levelPath)
         error("Failed to load level: " .. levelPath .. "\n" .. tostring(levelData))
     end
 
-    -- Parse grid if it exists
-    local objects = {targets = {}, pegs = {}}
+    -- Initialize objects
+    local objects = {targets = {}, pegs = {}, walls = {}}
 
-    if levelData.grid then
-        objects = Level.parseGrid(levelData.grid, levelData.cellSize, levelData.offsetX, levelData.offsetY)
+    -- New format: direct objects definition (pixel-perfect)
+    if levelData.objects then
+        -- Load targets
+        if levelData.objects.targets then
+            for _, t in ipairs(levelData.objects.targets) do
+                table.insert(objects.targets, Target.new(t.x, t.y))
+            end
+        end
+
+        -- Load pegs
+        if levelData.objects.pegs then
+            for _, p in ipairs(levelData.objects.pegs) do
+                table.insert(objects.pegs, PegTypes.create(p.type, p.x, p.y))
+            end
+        end
+
+        -- Load walls (line segments with x1,y1,x2,y2)
+        if levelData.objects.walls then
+            for _, w in ipairs(levelData.objects.walls) do
+                table.insert(objects.walls, Wall.new(w.x1, w.y1, w.x2, w.y2))
+            end
+        end
     end
 
-    -- Add custom objects if defined
+    -- Legacy format: grid-based (for backward compatibility)
+    if levelData.grid then
+        local gridObjects = Level.parseGrid(levelData.grid, levelData.cellSize, levelData.offsetX, levelData.offsetY)
+        -- Merge grid objects with any existing objects
+        for _, target in ipairs(gridObjects.targets) do
+            table.insert(objects.targets, target)
+        end
+        for _, peg in ipairs(gridObjects.pegs) do
+            table.insert(objects.pegs, peg)
+        end
+    end
+
+    -- Legacy format: custom objects (deprecated, use 'objects' instead)
     if levelData.custom then
         if levelData.custom.targets then
             for _, t in ipairs(levelData.custom.targets) do
@@ -94,6 +127,7 @@ function Level.load(levelPath)
         name = levelData.config and levelData.config.name or "Untitled",
         targets = objects.targets,
         pegs = objects.pegs,
+        walls = objects.walls,
         config = levelData.config or {}
     }
 end

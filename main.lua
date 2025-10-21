@@ -11,6 +11,7 @@ local Egg = require("src.entities.egg")
 local PegTypes = require("src.systems.pegs")
 local Peg = require("src.objects.peg")
 local Target = require("src.objects.target")
+local Wall = require("src.objects.wall")
 local Level = require("src.systems.level")
 
 -- Hot reload (development)
@@ -21,6 +22,7 @@ local bird
 local eggs = {}    -- Table to hold all active eggs
 local pegs = {}    -- Table to hold all pegs
 local targets = {} -- Table to hold all targets
+local walls = {}   -- Table to hold all walls
 
 -- Game state
 local currentLevel = 1
@@ -63,6 +65,7 @@ function loadLevel(levelNum)
     eggs = {}
     pegs = {}
     targets = {}
+    walls = {}
     eggsDropped = 0
 
     -- Load level data
@@ -82,6 +85,7 @@ function loadLevel(levelNum)
     -- Set level objects
     pegs = levelData.pegs
     targets = levelData.targets
+    walls = levelData.walls or {}  -- Walls are optional
     levelName = levelData.name
 
     -- Apply level config
@@ -91,7 +95,7 @@ function loadLevel(levelNum)
 
     print("========================================")
     print("Loaded: " .. levelName)
-    print("Targets: " .. #targets .. " | Pegs: " .. #pegs)
+    print("Targets: " .. #targets .. " | Pegs: " .. #pegs .. " | Walls: " .. #walls)
     print("========================================")
 end
 
@@ -130,6 +134,9 @@ function love.update(dt)
                 Peg.handleCollision(peg, eggs[i])
             end
         end
+
+        -- Check collisions with walls (eggs bounce)
+        Wall.checkAllCollisions(walls, eggs[i])
 
         -- Check collisions with other eggs (egg-to-egg bounce)
         for j = i + 1, #eggs do
@@ -186,6 +193,9 @@ function love.draw()
     -- Draw white border around play area
     love.graphics.setColor(1, 1, 1)
     love.graphics.rectangle("line", PLAY_X, PLAY_Y, PLAY_WIDTH, PLAY_HEIGHT)
+
+    -- Draw all walls (before other objects)
+    Wall.drawAll(walls)
 
     -- Draw all targets
     Target.drawAll(targets)
@@ -251,7 +261,7 @@ function drawDebugOverlay()
         love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
         love.graphics.print("Level: " .. currentLevel .. "/" .. maxLevel .. " - " .. levelName, 10, 25)
         local hitTargets = Target.countHit(targets)
-        love.graphics.print("Targets: " .. hitTargets .. "/" .. #targets .. " | Pegs: " .. #pegs, 10, 40)
+        love.graphics.print("Targets: " .. hitTargets .. "/" .. #targets .. " | Pegs: " .. #pegs .. " | Walls: " .. #walls, 10, 40)
         love.graphics.print("Eggs Dropped: " .. eggsDropped .. " | Active: " .. #eggs, 10, 55)
         love.graphics.print("Shader: " .. (Renderer:isShaderEnabled() and "ON" or "OFF") .. " (F2)", 10, 70)
         love.graphics.print("F3: Next Level", 10, 85)

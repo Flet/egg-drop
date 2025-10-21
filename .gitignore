@@ -1,0 +1,30 @@
+# Love2D
+*.love
+
+# Operating System
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
+
+# Temporary files
+*~
+*.swp
+*.swo
+*.tmp
+
+# Build artifacts
+dist/
+build/
+release/
+
+# Assets that might be large or generated
+# assets/**/*.psd
+# assets/**/*.xcf

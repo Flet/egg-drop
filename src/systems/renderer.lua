@@ -4,9 +4,18 @@
 local Renderer = {}
 
 function Renderer:init()
-    -- Game native resolution
+    -- Full game resolution (fills window)
     self.gameWidth = 320
     self.gameHeight = 240
+
+    -- Play area (square in center)
+    self.playAreaSize = 240  -- Square play area
+    self.playAreaX = (self.gameWidth - self.playAreaSize) / 2  -- Center horizontally (40 pixels on each side)
+    self.playAreaY = 0
+
+    -- UI panel areas
+    self.leftPanelWidth = self.playAreaX
+    self.rightPanelWidth = self.playAreaX
 
     -- Create canvas at game resolution
     self.canvas = love.graphics.newCanvas(self.gameWidth, self.gameHeight)
@@ -27,12 +36,17 @@ function Renderer:init()
 
     print("Renderer initialized:")
     print("  Game resolution: " .. self.gameWidth .. "x" .. self.gameHeight)
+    print("  Play area: " .. self.playAreaSize .. "x" .. self.playAreaSize .. " at (" .. self.playAreaX .. ", " .. self.playAreaY .. ")")
     print("  Window size: " .. self.windowWidth .. "x" .. self.windowHeight)
     print("  Scale: " .. self.scale .. "x")
     print("  Letterbox offset: " .. self.offsetX .. ", " .. self.offsetY)
 
     -- Load shader
     self:loadShader()
+end
+
+function Renderer:getPlayArea()
+    return self.playAreaX, self.playAreaY, self.playAreaSize, self.playAreaSize
 end
 
 function Renderer:calculateScale()
@@ -62,23 +76,23 @@ function Renderer:finishDrawing()
     -- Reset render target to screen
     love.graphics.setCanvas()
 
-    -- Clear screen with black (letterbox bars)
+    -- Clear screen (no letterbox, game fills entire window)
     love.graphics.clear(0, 0, 0)
 
-    -- Apply shader if enabled (will be added in step 03)
+    -- Apply shader if enabled
     if self.shaderEnabled and self.shader then
         love.graphics.setShader(self.shader)
     end
 
-    -- Draw the scaled canvas to screen
+    -- Draw the scaled canvas to fill the window
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(
         self.canvas,
-        self.offsetX,
-        self.offsetY,
+        0,  -- No offset, fill entire window
+        0,
         0,  -- rotation
-        self.scale,  -- scale X
-        self.scale   -- scale Y
+        self.windowWidth / self.gameWidth,   -- scale X to fill
+        self.windowHeight / self.gameHeight  -- scale Y to fill
     )
 
     -- Reset shader

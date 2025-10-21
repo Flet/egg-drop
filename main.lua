@@ -43,8 +43,13 @@ function love.load()
     -- Store game dimensions for easy access
     GAME_WIDTH, GAME_HEIGHT = Renderer:getGameDimensions()
 
-    -- Create bird at top-center of screen
-    bird = Bird.new(GAME_WIDTH / 2 - 6, 20, GAME_WIDTH)
+    -- Get play area dimensions
+    PLAY_X, PLAY_Y, PLAY_SIZE, _ = Renderer:getPlayArea()
+    PLAY_WIDTH = PLAY_SIZE
+    PLAY_HEIGHT = PLAY_SIZE
+
+    -- Create bird at top-center of PLAY AREA (not full screen)
+    bird = Bird.new(PLAY_X + PLAY_WIDTH / 2 - 6, 20, PLAY_X, PLAY_WIDTH)
 
     -- Configure lurker
     lurker.quiet = false  -- Show reload messages
@@ -126,6 +131,27 @@ function love.update(dt)
             end
         end
 
+        -- Check collisions with other eggs (egg-to-egg bounce)
+        for j = i + 1, #eggs do
+            local egg1 = eggs[i]
+            local egg2 = eggs[j]
+
+            local x1, y1 = egg1:getPosition()
+            local x2, y2 = egg2:getPosition()
+            local r1 = egg1:getRadius()
+            local r2 = egg2:getRadius()
+
+            -- Check if eggs are colliding
+            local dx = x2 - x1
+            local dy = y2 - y1
+            local distance = math.sqrt(dx * dx + dy * dy)
+
+            if distance < (r1 + r2) and distance > 0 then
+                -- Eggs are colliding - bounce them off each other
+                egg1:bounceOffCircle(x2, y2, r2)
+            end
+        end
+
         -- Remove dead eggs
         if not eggs[i]:isAlive() then
             table.remove(eggs, i)
@@ -152,6 +178,15 @@ function love.draw()
     -- Draw gradient background (cyan to blue)
     drawGradientBackground()
 
+    -- Draw UI panels (darker shade)
+    love.graphics.setColor(0, 0.4, 0.4)  -- Darker cyan
+    love.graphics.rectangle("fill", 0, 0, PLAY_X, GAME_HEIGHT)  -- Left panel
+    love.graphics.rectangle("fill", PLAY_X + PLAY_WIDTH, 0, PLAY_X, GAME_HEIGHT)  -- Right panel
+
+    -- Draw white border around play area
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle("line", PLAY_X, PLAY_Y, PLAY_WIDTH, PLAY_HEIGHT)
+
     -- Draw all targets
     Target.drawAll(targets)
 
@@ -166,17 +201,19 @@ function love.draw()
     -- Draw bird (on top of eggs)
     bird:draw()
 
-    -- Draw drop indicator line (shows where egg will drop)
+    -- Draw drop indicator line (shows where egg will drop, only in play area)
     local dropX, dropY = bird:getDropPosition()
     love.graphics.setColor(1, 1, 1, 0.2)
     love.graphics.line(dropX, dropY, dropX, GAME_HEIGHT)
 
-    -- Draw level info and instructions
+    -- Draw level info in left panel
     love.graphics.setColor(1, 1, 1)
-    love.graphics.print(levelName, 10, 200)
-    love.graphics.print("SPACE/CLICK to drop eggs", 10, 210)
     local hitTargets = Target.countHit(targets)
-    love.graphics.print("Level " .. currentLevel .. "/" .. maxLevel .. " | Targets: " .. hitTargets .. "/" .. #targets, 10, 225)
+    love.graphics.print("Lvl " .. currentLevel .. "/" .. maxLevel, 5, 10)
+    love.graphics.print("Tgt:", 5, 25)
+    love.graphics.print(hitTargets .. "/" .. #targets, 5, 35)
+    love.graphics.print("Eggs:", 5, 50)
+    love.graphics.print(eggsDropped, 5, 60)
 
     -- === END GAME RENDERING ===
 
@@ -242,7 +279,7 @@ function love.keypressed(key)
         local dropX, dropY = bird:requestDrop()
         if dropX then
             -- Create new egg
-            local egg = Egg.new(dropX, dropY, GAME_WIDTH, GAME_HEIGHT)
+            local egg = Egg.new(dropX, dropY, PLAY_X, PLAY_WIDTH, GAME_HEIGHT)
             table.insert(eggs, egg)
             eggsDropped = eggsDropped + 1
         end
@@ -261,7 +298,7 @@ function love.mousepressed(_x, _y, button)
         local dropX, dropY = bird:requestDrop()
         if dropX then
             -- Create new egg
-            local egg = Egg.new(dropX, dropY, GAME_WIDTH, GAME_HEIGHT)
+            local egg = Egg.new(dropX, dropY, PLAY_X, PLAY_WIDTH, GAME_HEIGHT)
             table.insert(eggs, egg)
             eggsDropped = eggsDropped + 1
         end

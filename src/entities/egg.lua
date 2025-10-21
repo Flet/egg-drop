@@ -4,13 +4,14 @@
 local Egg = {}
 Egg.__index = Egg
 
-function Egg.new(x, y, gameWidth, gameHeight)
+function Egg.new(x, y, playAreaX, playAreaWidth, gameHeight)
     local self = setmetatable({}, Egg)
 
     -- Position
     self.x = x
     self.y = y
-    self.gameWidth = gameWidth
+    self.playAreaX = playAreaX
+    self.playAreaWidth = playAreaWidth
     self.gameHeight = gameHeight
 
     -- Physics
@@ -51,12 +52,15 @@ function Egg:update(dt)
         self.alive = false
     end
 
-    -- Bounce off side walls
-    if self.x - self.radius < 0 then
-        self.x = self.radius
+    -- Bounce off play area side walls
+    local leftEdge = self.playAreaX
+    local rightEdge = self.playAreaX + self.playAreaWidth
+
+    if self.x - self.radius < leftEdge then
+        self.x = leftEdge + self.radius
         self.vx = math.abs(self.vx) * self.bounce
-    elseif self.x + self.radius > self.gameWidth then
-        self.x = self.gameWidth - self.radius
+    elseif self.x + self.radius > rightEdge then
+        self.x = rightEdge - self.radius
         self.vx = -math.abs(self.vx) * self.bounce
     end
 end

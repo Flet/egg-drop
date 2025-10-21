@@ -4,12 +4,13 @@
 local Bird = {}
 Bird.__index = Bird
 
-function Bird.new(x, y, gameWidth)
+function Bird.new(x, y, playAreaX, playAreaWidth)
     local self = setmetatable({}, Bird)
 
     self.x = x
     self.y = y
-    self.gameWidth = gameWidth
+    self.playAreaX = playAreaX  -- Left edge of play area
+    self.playAreaWidth = playAreaWidth  -- Width of play area
 
     -- Movement
     self.speed = 60  -- pixels per second
@@ -32,12 +33,13 @@ function Bird:update(dt)
     -- Move horizontally
     self.x = self.x + (self.speed * self.direction * dt)
 
-    -- Bounce off edges (instant direction change)
-    if self.direction == 1 and self.x >= self.gameWidth - self.width then
-        self.x = self.gameWidth - self.width
+    -- Bounce off play area edges (instant direction change)
+    local rightEdge = self.playAreaX + self.playAreaWidth
+    if self.direction == 1 and self.x >= rightEdge - self.width then
+        self.x = rightEdge - self.width
         self.direction = -1
-    elseif self.direction == -1 and self.x <= 0 then
-        self.x = 0
+    elseif self.direction == -1 and self.x <= self.playAreaX then
+        self.x = self.playAreaX
         self.direction = 1
     end
 

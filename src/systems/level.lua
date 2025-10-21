@@ -7,8 +7,9 @@ local Target = require("src.objects.target")
 local Level = {}
 
 -- Parse grid string into game objects
-function Level.parseGrid(gridString, cellSize, offsetY)
+function Level.parseGrid(gridString, cellSize, offsetX, offsetY)
     cellSize = cellSize or 8  -- Default 8px per cell
+    offsetX = offsetX or 40   -- Default horizontal offset to center in play area
     offsetY = offsetY or 40   -- Default vertical offset to push grid down from bird area
 
     local objects = {
@@ -30,7 +31,7 @@ function Level.parseGrid(gridString, cellSize, offsetY)
     for y, line in ipairs(lines) do
         for x = 1, #line do
             local char = line:sub(x, x)
-            local px = (x - 1) * cellSize
+            local px = (x - 1) * cellSize + offsetX
             local py = (y - 1) * cellSize + offsetY
 
             -- Target
@@ -71,7 +72,7 @@ function Level.load(levelPath)
     local objects = {targets = {}, pegs = {}}
 
     if levelData.grid then
-        objects = Level.parseGrid(levelData.grid, levelData.cellSize, levelData.offsetY)
+        objects = Level.parseGrid(levelData.grid, levelData.cellSize, levelData.offsetX, levelData.offsetY)
     end
 
     -- Add custom objects if defined

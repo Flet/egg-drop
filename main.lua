@@ -8,10 +8,25 @@ DEBUG = true
 local Renderer = require("src.systems.renderer")
 local Bird = require("src.entities.bird")
 local Egg = require("src.entities.egg")
+local PegTypes = require("src.systems.pegs")
+local Peg = require("src.objects.peg")
+local Target = require("src.objects.target")
+local Level = require("src.systems.level")
+
+-- Hot reload (development)
+local lurker = require("lib.lurker")
 
 -- Game objects
 local bird
-local eggs = {}  -- Table to hold all active eggs
+local eggs = {}    -- Table to hold all active eggs
+local pegs = {}    -- Table to hold all pegs
+local targets = {} -- Table to hold all targets
+
+-- Game state
+local currentLevel = 1
+local maxLevel = 5
+local eggsDropped = 0
+local levelName = ""
 
 function love.load()
     -- Disable filtering for crisp pixel art
@@ -30,20 +45,101 @@ function love.load()
 
     -- Create bird at top-center of screen
     bird = Bird.new(GAME_WIDTH / 2 - 6, 20, GAME_WIDTH)
+
+    -- Configure lurker
+    lurker.quiet = false  -- Show reload messages
+
+    -- Load first level
+    loadLevel(currentLevel)
+end
+
+function loadLevel(levelNum)
+    -- Clear existing objects
+    eggs = {}
+    pegs = {}
+    targets = {}
+    eggsDropped = 0
+
+    -- Load level data
+    local levelPath = "levels.level" .. levelNum
+    local success, levelData = pcall(function()
+        return Level.load(levelPath)
+    end)
+
+    if not success then
+        print("ERROR: Failed to load level " .. levelNum)
+        print(levelData)
+        -- Fallback to empty level
+        levelName = "Error Loading Level"
+        return
+    end
+
+    -- Set level objects
+    pegs = levelData.pegs
+    targets = levelData.targets
+    levelName = levelData.name
+
+    -- Apply level config
+    if levelData.config.bird_speed then
+        bird:setSpeed(levelData.config.bird_speed)
+    end
+
+    print("========================================")
+    print("Loaded: " .. levelName)
+    print("Targets: " .. #targets .. " | Pegs: " .. #pegs)
+    print("========================================")
+end
+
+function nextLevel()
+    currentLevel = currentLevel + 1
+    if currentLevel > maxLevel then
+        print("========================================")
+        print("GAME COMPLETE! You won!")
+        print("Restarting from level 1...")
+        print("========================================")
+        currentLevel = 1
+    end
+    loadLevel(currentLevel)
 end
 
 function love.update(dt)
+    -- Hot reload check
+    lurker.update()
+
     -- Update bird
     bird:update(dt)
+
+    -- Update targets
+    Target.updateAll(targets, dt)
 
     -- Update all eggs
     for i = #eggs, 1, -1 do
         eggs[i]:update(dt)
 
+        -- Check collisions with targets (eggs pass through)
+        Target.checkAllCollisions(targets, eggs[i])
+
+        -- Check collisions with pegs (eggs bounce)
+        for _, peg in ipairs(pegs) do
+            if Peg.checkCollision(peg, eggs[i]) then
+                Peg.handleCollision(peg, eggs[i])
+            end
+        end
+
         -- Remove dead eggs
         if not eggs[i]:isAlive() then
             table.remove(eggs, i)
         end
+    end
+
+    -- Update pegs (remove destroyed ones)
+    Peg.updateAll(pegs)
+
+    -- Check win condition
+    if Target.allHit(targets) then
+        print("LEVEL COMPLETE! All targets hit!")
+        print("Eggs used: " .. eggsDropped)
+        nextLevel()
     end
 end
 
@@ -55,6 +151,12 @@ function love.draw()
 
     -- Draw gradient background (cyan to blue)
     drawGradientBackground()
+
+    -- Draw all targets
+    Target.drawAll(targets)
+
+    -- Draw all pegs
+    Peg.drawAll(pegs)
 
     -- Draw all eggs
     for _, egg in ipairs(eggs) do
@@ -69,10 +171,12 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 0.2)
     love.graphics.line(dropX, dropY, dropX, GAME_HEIGHT)
 
-    -- Draw instructions
+    -- Draw level info and instructions
     love.graphics.setColor(1, 1, 1)
+    love.graphics.print(levelName, 10, 200)
     love.graphics.print("SPACE/CLICK to drop eggs", 10, 210)
-    love.graphics.print("Eggs: " .. #eggs, 10, 225)
+    local hitTargets = Target.countHit(targets)
+    love.graphics.print("Level " .. currentLevel .. "/" .. maxLevel .. " | Targets: " .. hitTargets .. "/" .. #targets, 10, 225)
 
     -- === END GAME RENDERING ===
 
@@ -87,11 +191,11 @@ function drawGradientBackground()
     -- Draw vertical gradient from cyan to blue
     -- Simple approach: draw horizontal lines with interpolated colors
 
-    local colorTop = {0, 0.85, 0.85}     -- Cyan
-    local colorBottom = {0, 0, 1}         -- Blue
+    local colorTop = { 0, 0.85, 0.85 } -- Cyan
+    local colorBottom = { 0, 0, 1 }  -- Blue
 
     for y = 0, GAME_HEIGHT do
-        local t = y / GAME_HEIGHT  -- 0 to 1
+        local t = y / GAME_HEIGHT -- 0 to 1
 
         local r = colorTop[1] + (colorBottom[1] - colorTop[1]) * t
         local g = colorTop[2] + (colorBottom[2] - colorTop[2]) * t
@@ -108,10 +212,12 @@ function drawDebugOverlay()
         love.graphics.setColor(0, 1, 0)
         local stats = love.graphics.getStats()
         love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
-        love.graphics.print("Eggs: " .. #eggs, 10, 25)
-        love.graphics.print("Draw Calls: " .. stats.drawcalls, 10, 40)
-        love.graphics.print("Shader: " .. (Renderer:isShaderEnabled() and "ON" or "OFF") .. " (F2)", 10, 55)
-        love.graphics.print("Bird X: " .. math.floor(bird.x), 10, 70)
+        love.graphics.print("Level: " .. currentLevel .. "/" .. maxLevel .. " - " .. levelName, 10, 25)
+        local hitTargets = Target.countHit(targets)
+        love.graphics.print("Targets: " .. hitTargets .. "/" .. #targets .. " | Pegs: " .. #pegs, 10, 40)
+        love.graphics.print("Eggs Dropped: " .. eggsDropped .. " | Active: " .. #eggs, 10, 55)
+        love.graphics.print("Shader: " .. (Renderer:isShaderEnabled() and "ON" or "OFF") .. " (F2)", 10, 70)
+        love.graphics.print("F3: Next Level", 10, 85)
     end
 end
 
@@ -138,8 +244,14 @@ function love.keypressed(key)
             -- Create new egg
             local egg = Egg.new(dropX, dropY, GAME_WIDTH, GAME_HEIGHT)
             table.insert(eggs, egg)
-            print("Egg dropped! Total eggs: " .. #eggs)
+            eggsDropped = eggsDropped + 1
         end
+    end
+
+    -- F3 to skip to next level (debug)
+    if key == "f3" then
+        print("Skipping to next level...")
+        nextLevel()
     end
 end
 
@@ -151,6 +263,7 @@ function love.mousepressed(_x, _y, button)
             -- Create new egg
             local egg = Egg.new(dropX, dropY, GAME_WIDTH, GAME_HEIGHT)
             table.insert(eggs, egg)
+            eggsDropped = eggsDropped + 1
         end
     end
 end

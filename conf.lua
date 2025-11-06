@@ -1,7 +1,7 @@
 function love.conf(t)
     -- Game identity (used for save data folder)
     t.identity = "lovely-egg-drop"
-    t.version = "11.5"  -- Love2D version compatibility
+    t.version = "11.4"  -- Love2D version compatibility (11.4 for love.js web builds)
 
     -- Window configuration
     t.window.title = "Egg Drop"

@@ -100,14 +100,15 @@ function Audio:playDropSound()
         self.dropSourceIndex = 1
     end
 
-    -- Random pitch variation: 0.6 to 1.1 (50% variation)
-    -- This also naturally varies the duration (lower pitch = longer, higher pitch = shorter)
-    local pitchVariation = 0.6 + math.random() * 0.5
-    source:setPitch(pitchVariation)
+    -- Only play if source is not already playing (web compatibility)
+    if not source:isPlaying() then
+        -- Random pitch variation: 0.6 to 1.1 (50% variation)
+        local pitchVariation = 0.6 + math.random() * 0.5
+        source:setPitch(pitchVariation)
 
-    -- Reset to start and play
-    source:seek(0)
-    love.audio.play(source)
+        -- Play without seek (avoid love.js bug)
+        love.audio.play(source)
+    end
 end
 
 function Audio:playBounceSound()
@@ -120,13 +121,15 @@ function Audio:playBounceSound()
         self.bounceSourceIndex = 1
     end
 
-    -- Random pitch variation: 0.9 to 1.1 (10% variation each way)
-    local pitchVariation = 0.9 + math.random() * 0.2
-    source:setPitch(pitchVariation)
+    -- Only play if source is not already playing (web compatibility)
+    if not source:isPlaying() then
+        -- Random pitch variation: 0.9 to 1.1 (10% variation each way)
+        local pitchVariation = 0.9 + math.random() * 0.2
+        source:setPitch(pitchVariation)
 
-    -- Reset to start and play
-    source:seek(0)
-    love.audio.play(source)
+        -- Play without seek (avoid love.js bug)
+        love.audio.play(source)
+    end
 end
 
 function Audio:playClickSound()
@@ -139,13 +142,15 @@ function Audio:playClickSound()
         self.clickSourceIndex = 1
     end
 
-    -- Random pitch variation: 0.95 to 1.05 (5% variation each way - subtle)
-    local pitchVariation = 0.95 + math.random() * 0.1
-    source:setPitch(pitchVariation)
+    -- Only play if source is not already playing (web compatibility)
+    if not source:isPlaying() then
+        -- Random pitch variation: 0.95 to 1.05 (5% variation each way - subtle)
+        local pitchVariation = 0.95 + math.random() * 0.1
+        source:setPitch(pitchVariation)
 
-    -- Reset to start and play
-    source:seek(0)
-    love.audio.play(source)
+        -- Play without seek (avoid love.js bug)
+        love.audio.play(source)
+    end
 end
 
 function Audio:playSweepSound()
@@ -158,13 +163,15 @@ function Audio:playSweepSound()
         self.sweepSourceIndex = 1
     end
 
-    -- Random pitch variation: 0.9 to 1.1 (10% variation - satisfying sweep)
-    local pitchVariation = 0.9 + math.random() * 0.2
-    source:setPitch(pitchVariation)
+    -- Only play if source is not already playing (web compatibility)
+    if not source:isPlaying() then
+        -- Random pitch variation: 0.9 to 1.1 (10% variation - satisfying sweep)
+        local pitchVariation = 0.9 + math.random() * 0.2
+        source:setPitch(pitchVariation)
 
-    -- Reset to start and play
-    source:seek(0)
-    love.audio.play(source)
+        -- Play without seek (avoid love.js bug)
+        love.audio.play(source)
+    end
 end
 
 function Audio:playClackSound()
@@ -177,13 +184,15 @@ function Audio:playClackSound()
         self.clackSourceIndex = 1
     end
 
-    -- Random pitch variation: 0.95 to 1.05 (5% variation - sharp clack)
-    local pitchVariation = 0.95 + math.random() * 0.1
-    source:setPitch(pitchVariation)
+    -- Only play if source is not already playing (web compatibility)
+    if not source:isPlaying() then
+        -- Random pitch variation: 0.95 to 1.05 (5% variation - sharp clack)
+        local pitchVariation = 0.95 + math.random() * 0.1
+        source:setPitch(pitchVariation)
 
-    -- Reset to start and play
-    source:seek(0)
-    love.audio.play(source)
+        -- Play without seek (avoid love.js bug)
+        love.audio.play(source)
+    end
 end
 
 return Audio

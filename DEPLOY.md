@@ -81,7 +81,9 @@ npm run build
 npm run serve
 ```
 
-Then open http://localhost:3000 in your browser.
+This will start a server at http://localhost:8080 with the proper headers for SharedArrayBuffer support.
+
+**Important**: The web build requires special HTTP headers (COOP/COEP) to work. Opening `web/index.html` directly in a browser won't work - you must use `npm run serve`.
 
 ## Automatic Deployment with GitHub Actions
 

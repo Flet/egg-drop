@@ -4,9 +4,8 @@
   "description": "A retro-styled egg drop puzzle game built with Love2D",
   "scripts": {
     "build:love": "bash build.sh",
-    "build:web": "npx love.js build/lovely.love web --title \"Lovely - Egg Drop Game\" --memory 33554432",
-    "postbuild:web": "curl -sL https://raw.githubusercontent.com/gzuidhof/coi-serviceworker/master/coi-serviceworker.js -o web/coi-serviceworker.js",
-    "build": "npm run build:love && npm run build:web",
+    "build:web": "bash build-web.sh",
+    "build": "bash build-web.sh",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d web",
     "deploy:ci": "gh-pages -d web -u 'github-actions-bot <support+actions@github.com>'",

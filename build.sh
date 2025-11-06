@@ -24,13 +24,22 @@ echo "Creating .love file..."
 # Include all game files except build artifacts, git, and dev files
 zip -9 -r "$BUILD_DIR/$GAME_NAME.love" . \
     -x "build/*" \
+    -x "web/*" \
     -x ".git/*" \
+    -x ".github/*" \
     -x ".gitignore" \
     -x "*.sh" \
     -x "*.md" \
     -x ".vscode/*" \
     -x "*.bat" \
-    -x ".DS_Store"
+    -x ".DS_Store" \
+    -x "node_modules/*" \
+    -x "package.json" \
+    -x "package-lock.json" \
+    -x "serve-web.js" \
+    -x "*.jpg" \
+    -x "*.png" \
+    -x "plan/*"
 
 echo "========================================"
 echo "Build complete!"

@@ -1,0 +1,100 @@
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        touch-action: manipulation;
+      }
+      canvas {
+        display: block;
+        margin: 0 auto;
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100vw;
+        max-height: calc(100vh - 100px);
+        object-fit: contain;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+      #loadingCanvas {
+        max-height: 60vh;
+      }
+      center {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+      }
+      center > div {
+        width: 100%;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      h1 {
+        color: white;
+        font-family: Arial, sans-serif;
+        font-size: clamp(1rem, 5vw, 2rem);
+        margin: 10px;
+        text-align: center;
+      }
+      footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        padding: 10px;
+        background: rgba(0,0,0,0.9);
+        color: white;
+        font-size: clamp(0.6rem, 2vw, 0.8rem);
+        z-index: 1000;
+      }
+      footer a {
+        color: #4a9eff;
+        text-decoration: none;
+      }
+      footer button {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+      }
+      @media (max-width: 768px) {
+        canvas {
+          max-height: calc(100vh - 150px);
+        }
+        h1 {
+          font-size: 1rem;
+          margin: 5px;
+        }
+        footer {
+          font-size: 0.65rem;
+          padding: 8px 5px;
+        }
+        footer button {
+          font-size: 0.7rem;
+          padding: 4px 8px;
+        }
+      }
+      @media (orientation: landscape) and (max-height: 600px) {
+        h1 {
+          font-size: 0.9rem;
+          margin: 2px;
+        }
+        canvas {
+          max-height: calc(100vh - 80px);
+        }
+        footer {
+          padding: 5px;
+          font-size: 0.6rem;
+        }
+      }
+    </style>

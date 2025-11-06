@@ -18,9 +18,11 @@ npx love.js build/lovely.love web --title "Lovely - Egg Drop Game" --memory 3355
 echo "Step 3: Adding SharedArrayBuffer support..."
 cp coi-serviceworker.js web/coi-serviceworker.js
 
-# Patch index.html to load the service worker
-echo "Step 4: Patching index.html..."
+# Patch index.html to load the service worker and add mobile support
+echo "Step 4: Patching index.html for mobile and SharedArrayBuffer..."
 sed -i '/<meta charset="utf-8">/a\    <script src="coi-serviceworker.js"><\/script>' web/index.html
+sed -i 's/<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, minimum-scale=1, maximum-scale=1">/<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">/' web/index.html
+sed -i '/<link rel="stylesheet" type="text\/css" href="theme\/love.css">/r mobile-patch.html' web/index.html
 
 echo "========================================"
 echo "Web build complete!"

@@ -10,9 +10,11 @@ A retro-styled egg drop puzzle game inspired by Nintendo Land's Coin Game. Drop 
 - **Two peg types:**
   - Square pegs (destructible, 3 hits)
   - Round pegs (indestructible)
+- **Dynamic sound effects** with pitch variation for natural audio variety
 - **Level progression** with win detection
 - **Hot reload** for rapid development
 - **Arcade-style physics** with satisfying bouncing
+- **Play online** - Playable in browser via GitHub Pages
 
 ## Controls
 
@@ -33,11 +35,17 @@ A retro-styled egg drop puzzle game inspired by Nintendo Land's Coin Game. Drop 
 
 ## Running the Game
 
+### Desktop Version
+
 ```bash
 love .
 ```
 
-Requires Love2D 11.5 or later.
+Requires Love2D 11.4 or later.
+
+### Web Version
+
+The game is also available to play in your browser! See [DEPLOY.md](DEPLOY.md) for deployment instructions.
 
 ## Development
 
@@ -53,8 +61,8 @@ lovely/
 │   └── lurker.lua    # Hot reload
 ├── src/
 │   ├── entities/     # Game entities (bird, egg)
-│   ├── objects/      # Reusable objects (peg, target)
-│   ├── systems/      # Core systems (renderer, level, pegs)
+│   ├── objects/      # Reusable objects (peg, target, wall)
+│   ├── systems/      # Core systems (renderer, level, pegs, audio)
 │   ├── shaders/      # GLSL shaders
 │   └── utils/        # Helper functions
 ├── levels/           # Level definitions
@@ -63,49 +71,93 @@ lovely/
 │   ├── level3.lua
 │   ├── level4.lua
 │   └── level5.lua
-└── assets/           # Game assets (currently empty)
+└── assets/           # Game assets
+    └── sounds/       # Audio files (.ogg format)
 ```
 
 ## Creating New Levels
 
-Levels use a simple grid format. Create a new file in `levels/`:
+Levels use pixel-perfect coordinate placement. Create a new file in `levels/`:
 
 ```lua
 return {
-    grid = [[
-........T.......T.......
-.■..■..■..■..■..■..■..■.
-........●.......●.......
-........T.......T.......
-    ]],
+    -- Play area is 240x240 pixels, starting at x=40
+    -- Available area: x: 40-280, y: 0-240
+
+    objects = {
+        -- Targets (blue circles that turn orange when hit)
+        targets = {
+            {x = 100, y = 50},
+            {x = 160, y = 50},
+            {x = 220, y = 50},
+        },
+
+        -- Pegs (obstacles)
+        pegs = {
+            -- Square pegs (destructible: white -> pink -> red -> destroyed)
+            {type = "square", x = 60, y = 90},
+            {type = "square", x = 120, y = 90},
+
+            -- Round pegs (indestructible bounce)
+            {type = "round", x = 100, y = 130},
+            {type = "round", x = 160, y = 130},
+        },
+
+        -- Walls (optional, thin line segments)
+        walls = {
+            {x1 = 50, y1 = 100, x2 = 200, y2 = 100},  -- Horizontal wall
+        }
+    },
 
     config = {
         name = "My Level",
-        bird_speed = 60,
-        gravity = 200,
-        par_eggs = 20
+        bird_speed = 60,      -- Speed of bird movement
+        gravity = 200,        -- Gravity force on eggs
+        par_eggs = 15         -- Target number of eggs (for rating)
     }
 }
 ```
 
-**Grid Legend:**
-- `T` = Target (blue circle)
-- `■` or `S` = Square peg (destructible)
-- `●` or `O` = Round peg (indestructible)
-- `.` or space = Empty
+**Object Types:**
+- **Targets**: Blue circles (radius 4px) that turn orange when hit by eggs
+- **Square pegs**: 6x6px destructible blocks (3 hits to destroy)
+- **Round pegs**: 6px radius indestructible circles
+- **Walls**: Thin line segments eggs bounce off of
 
-Update `maxLevel` in main.lua to include new levels.
+Update `maxLevel` in [main.lua](main.lua#L29) to include new levels.
+
+## Sound Effects
+
+The game includes dynamic audio with pitch variation:
+- **pop.ogg** - Egg drop sound
+- **bounce.ogg** - Circle peg collision
+- **click.ogg** - Square peg collision
+- **sweep.ogg** - Target hit
+- **clack.ogg** - Wall collision
+
+All sounds use `.ogg` format and include random pitch variation for natural variety.
+
+## Building & Distribution
+
+See [BUILD.md](BUILD.md) for instructions on creating distributable versions:
+- `.love` files for Love2D users
+- Platform-specific executables (Windows, macOS)
+- Web builds for browser play
+
+See [DEPLOY.md](DEPLOY.md) for GitHub Pages deployment.
 
 ## Technical Details
 
-- **Engine**: Love2D 11.5+
+- **Engine**: Love2D 11.4+
 - **Language**: Lua
 - **Resolution**: 320x240 (scaled to 1280x720)
 - **FPS**: 60 (vsync enabled)
 - **Physics**: Custom arcade-style (not Box2D)
+- **Audio**: OpenAL via Love2D with source pooling
 
 ## Credits
 
 Inspired by Nintendo Land (Wii U) - Coin Game
 Built with Love2D
 Shader effects for retro aesthetic
+Web support via love.js

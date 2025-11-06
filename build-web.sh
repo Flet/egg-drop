@@ -18,6 +18,10 @@ npx love.js build/lovely.love web --title "Lovely - Egg Drop Game" --memory 3355
 echo "Step 3: Adding SharedArrayBuffer support..."
 cp coi-serviceworker.js web/coi-serviceworker.js
 
+# Patch index.html to load the service worker
+echo "Step 4: Patching index.html..."
+sed -i '/<meta charset="utf-8">/a\    <script src="coi-serviceworker.js"><\/script>' web/index.html
+
 echo "========================================"
 echo "Web build complete!"
 echo "Output: web/"

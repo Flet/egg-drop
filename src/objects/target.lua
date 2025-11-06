@@ -77,7 +77,9 @@ function Target:onHit()
     if not self.hit and not self.animating then
         self.animating = true
         self.animationTime = 0
+        return true  -- Return true to indicate a new hit occurred
     end
+    return false  -- Already hit or animating
 end
 
 function Target:isHit()

@@ -135,11 +135,14 @@ end
 
 -- Check collision with all walls
 function Wall.checkAllCollisions(walls, egg)
+    local hadCollision = false
     for _, wall in ipairs(walls) do
         if Wall.checkCollision(wall, egg) then
             Wall.handleCollision(wall, egg)
+            hadCollision = true
         end
     end
+    return hadCollision
 end
 
 return Wall

@@ -6,6 +6,7 @@ DEBUG = true
 
 -- Systems
 local Renderer = require("src.systems.renderer")
+local Audio = require("src.systems.audio")
 local Bird = require("src.entities.bird")
 local Egg = require("src.entities.egg")
 local PegTypes = require("src.systems.pegs")
@@ -42,6 +43,9 @@ function love.load()
     -- Initialize renderer
     Renderer:init()
 
+    -- Initialize audio
+    Audio:init()
+
     -- Store game dimensions for easy access
     GAME_WIDTH, GAME_HEIGHT = Renderer:getGameDimensions()
 
@@ -54,7 +58,7 @@ function love.load()
     bird = Bird.new(PLAY_X + PLAY_WIDTH / 2 - 6, 20, PLAY_X, PLAY_WIDTH)
 
     -- Configure lurker
-    lurker.quiet = false  -- Show reload messages
+    lurker.quiet = false -- Show reload messages
 
     -- Load first level
     loadLevel(currentLevel)
@@ -85,7 +89,7 @@ function loadLevel(levelNum)
     -- Set level objects
     pegs = levelData.pegs
     targets = levelData.targets
-    walls = levelData.walls or {}  -- Walls are optional
+    walls = levelData.walls or {} -- Walls are optional
     levelName = levelData.name
 
     -- Apply level config
@@ -126,17 +130,34 @@ function love.update(dt)
         eggs[i]:update(dt)
 
         -- Check collisions with targets (eggs pass through)
-        Target.checkAllCollisions(targets, eggs[i])
+        for _, target in ipairs(targets) do
+            if target:checkCollision(eggs[i]) then
+                local wasNewHit = target:onHit()
+                if wasNewHit then
+                    Audio:playSweepSound()
+                end
+            end
+        end
 
         -- Check collisions with pegs (eggs bounce)
         for _, peg in ipairs(pegs) do
             if Peg.checkCollision(peg, eggs[i]) then
                 Peg.handleCollision(peg, eggs[i])
+
+                -- Play appropriate sound based on peg shape
+                if peg.shape == "circle" then
+                    Audio:playBounceSound()
+                elseif peg.shape == "rectangle" then
+                    Audio:playClickSound()
+                end
             end
         end
 
         -- Check collisions with walls (eggs bounce)
-        Wall.checkAllCollisions(walls, eggs[i])
+        local wallCollision = Wall.checkAllCollisions(walls, eggs[i])
+        if wallCollision then
+            Audio:playClackSound()
+        end
 
         -- Check collisions with other eggs (egg-to-egg bounce)
         for j = i + 1, #eggs do
@@ -186,9 +207,9 @@ function love.draw()
     drawGradientBackground()
 
     -- Draw UI panels (darker shade)
-    love.graphics.setColor(0, 0.4, 0.4)  -- Darker cyan
-    love.graphics.rectangle("fill", 0, 0, PLAY_X, GAME_HEIGHT)  -- Left panel
-    love.graphics.rectangle("fill", PLAY_X + PLAY_WIDTH, 0, PLAY_X, GAME_HEIGHT)  -- Right panel
+    love.graphics.setColor(0, 0.4, 0.4)                                          -- Darker cyan
+    love.graphics.rectangle("fill", 0, 0, PLAY_X, GAME_HEIGHT)                   -- Left panel
+    love.graphics.rectangle("fill", PLAY_X + PLAY_WIDTH, 0, PLAY_X, GAME_HEIGHT) -- Right panel
 
     -- Draw white border around play area
     love.graphics.setColor(1, 1, 1)
@@ -212,9 +233,9 @@ function love.draw()
     bird:draw()
 
     -- Draw drop indicator line (shows where egg will drop, only in play area)
-    local dropX, dropY = bird:getDropPosition()
-    love.graphics.setColor(1, 1, 1, 0.2)
-    love.graphics.line(dropX, dropY, dropX, GAME_HEIGHT)
+    -- local dropX, dropY = bird:getDropPosition()
+    -- love.graphics.setColor(1, 1, 1, 0.2)
+    -- love.graphics.line(dropX, dropY, dropX, GAME_HEIGHT)
 
     -- Draw level info in left panel
     love.graphics.setColor(1, 1, 1)
@@ -239,7 +260,7 @@ function drawGradientBackground()
     -- Simple approach: draw horizontal lines with interpolated colors
 
     local colorTop = { 0, 0.85, 0.85 } -- Cyan
-    local colorBottom = { 0, 0, 1 }  -- Blue
+    local colorBottom = { 0, 0, 1 }    -- Blue
 
     for y = 0, GAME_HEIGHT do
         local t = y / GAME_HEIGHT -- 0 to 1
@@ -261,7 +282,8 @@ function drawDebugOverlay()
         love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
         love.graphics.print("Level: " .. currentLevel .. "/" .. maxLevel .. " - " .. levelName, 10, 25)
         local hitTargets = Target.countHit(targets)
-        love.graphics.print("Targets: " .. hitTargets .. "/" .. #targets .. " | Pegs: " .. #pegs .. " | Walls: " .. #walls, 10, 40)
+        love.graphics.print(
+        "Targets: " .. hitTargets .. "/" .. #targets .. " | Pegs: " .. #pegs .. " | Walls: " .. #walls, 10, 40)
         love.graphics.print("Eggs Dropped: " .. eggsDropped .. " | Active: " .. #eggs, 10, 55)
         love.graphics.print("Shader: " .. (Renderer:isShaderEnabled() and "ON" or "OFF") .. " (F2)", 10, 70)
         love.graphics.print("F3: Next Level", 10, 85)
@@ -292,6 +314,9 @@ function love.keypressed(key)
             local egg = Egg.new(dropX, dropY, PLAY_X, PLAY_WIDTH, GAME_HEIGHT)
             table.insert(eggs, egg)
             eggsDropped = eggsDropped + 1
+
+            -- Play drop sound with pitch variation
+            Audio:playDropSound()
         end
     end
 
@@ -311,6 +336,9 @@ function love.mousepressed(_x, _y, button)
             local egg = Egg.new(dropX, dropY, PLAY_X, PLAY_WIDTH, GAME_HEIGHT)
             table.insert(eggs, egg)
             eggsDropped = eggsDropped + 1
+
+            -- Play drop sound with pitch variation
+            Audio:playDropSound()
         end
     end
 end

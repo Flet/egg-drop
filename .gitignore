@@ -25,6 +25,17 @@ dist/
 build/
 release/
 
+# Node.js
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Web build (will be deployed to gh-pages)
+web/
+.gh-pages-cache/
+
 # Assets that might be large or generated
 # assets/**/*.psd
 # assets/**/*.xcf
